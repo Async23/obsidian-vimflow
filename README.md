@@ -1,14 +1,23 @@
 # Vimflow
 
-为 Obsidian 提供 Vim 风格键盘导航。长按 `j/k` 时按画面刷新节奏连续滚动，松键停止；通过字母提示打开链接和操作工作区。
+Vim-style keyboard navigation for Obsidian, with frame-driven continuous scrolling and letter hints for links and workspace controls.
 
-支持笔记阅读、编辑视图滚动、侧栏及独立窗口。输入框与弹窗保留原有按键行为。
+Works in reading views, editor views, sidebars, and popout windows. Inputs, menus, and dialogs retain their normal keyboard behavior.
 
-启用后按 `Esc` 进入导航，长按 `j/k` 滚动，按 `f` 显示定位字母；按 `i` 进入编辑。
+## Installation
 
-- [安装与使用](docs/guide.md)
-- [下载发行版](https://github.com/Async23/obsidian-vimflow/releases)
-- [开发与贡献](CONTRIBUTING.md)
-- [报告问题](https://github.com/Async23/obsidian-vimflow/issues)
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/Async23/obsidian-vimflow/releases/latest).
+2. Put the three files in `<vault>/.obsidian/plugins/vimflow/`. If you use a custom configuration directory, replace `.obsidian` with that directory.
+3. Reload Obsidian and enable **Vimflow** in **Settings → Community plugins**. Disable other global navigation plugins that handle the same keys.
 
-独立开发，采用 [MIT 许可证](LICENSE)。
+## Usage
+
+Press `Esc` to enter navigation mode. Hold `j/k/h/l` to scroll continuously; release the key to stop. Press `f` to show hints, then type a hint's letters to activate its target. Press `i` to edit and `?` for the shortcut reference.
+
+The note picker reads local Markdown file paths to let you find notes. Vimflow works offline and does not collect telemetry or require an account or payment.
+
+- [中文使用说明与完整快捷键](docs/guide.md)
+- [Development and contributing](CONTRIBUTING.md)
+- [Report an issue](https://github.com/Async23/obsidian-vimflow/issues)
+
+An independent project, released under the [MIT license](LICENSE).

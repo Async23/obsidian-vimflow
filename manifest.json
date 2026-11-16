@@ -1,7 +1,7 @@
 {
   "id": "vimflow",
   "name": "Vimflow",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "minAppVersion": "1.13.0",
   "description": "Navigate notes and the workspace with Vim-style keys, continuous scrolling, and link hints.",
   "author": "Async23",

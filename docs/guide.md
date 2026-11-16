@@ -4,12 +4,9 @@ Vimflow 面向桌面版 Obsidian，要求 Obsidian 1.13.0 或更新版本。
 
 ## 安装
 
-1. 从 [Releases](https://github.com/Async23/obsidian-vimflow/releases) 下载 `main.js`、`manifest.json` 和 `styles.css`。
-2. 在仓库配置目录内创建 `plugins/vimflow/`，将三个文件放入该目录。默认位置是 `<vault>/.obsidian/plugins/vimflow/`。
-3. 重新加载 Obsidian，在“设置 → 第三方插件”中启用 Vimflow。
-4. 如有其他接管 `j/k/f` 的全局导航插件，先停用它们，再启用 Vimflow，以免同一按键触发多个动作。
+手动安装步骤见 [README 的 Installation](../README.md#installation)。也可以通过 BRAT 添加 `Async23/obsidian-vimflow`。
 
-也可以通过 BRAT 添加 `Async23/obsidian-vimflow`。Vimflow 尚未加入 Obsidian 官方社区插件目录。
+如有其他接管 `j/k/f` 的全局导航插件，先停用它们，再启用 Vimflow，以免同一按键触发多个动作。
 
 ## 导航和输入
 

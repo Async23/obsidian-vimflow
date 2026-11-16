@@ -8,7 +8,7 @@ pnpm exec playwright install chromium
 pnpm check
 ```
 
-`pnpm check` 执行格式检查、单元测试、类型检查、生产构建和无界面 Chromium 测试。Linux 上首次准备浏览器时使用 `pnpm exec playwright install --with-deps chromium`。
+`pnpm check` 执行格式检查、Obsidian 官方 ESLint 检查、单元测试、类型检查、生产构建和无界面 Chromium 测试。Linux 上首次准备浏览器时使用 `pnpm exec playwright install --with-deps chromium`。
 
 开发时运行 `pnpm dev`，将构建后的 `main.js` 与根目录的 `manifest.json`、`styles.css` 放入测试仓库的插件目录；重新加载插件后生效。使用独立测试仓库调试。
 

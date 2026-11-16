@@ -1,6 +1,6 @@
 # 安装与使用
 
-Vimflow 面向桌面版 Obsidian，要求 Obsidian 1.5.0 或更新版本。
+Vimflow 面向桌面版 Obsidian，要求 Obsidian 1.13.0 或更新版本。
 
 ## 安装
 

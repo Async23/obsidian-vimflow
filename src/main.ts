@@ -4,23 +4,25 @@ import {
   MarkdownView,
   Modal,
   Notice,
+  Platform,
   Plugin,
   PluginSettingTab,
-  Setting,
+  getLanguage,
 } from "obsidian";
-import type { TFile, WorkspaceLeaf } from "obsidian";
+import type { SettingDefinitionItem, TFile, WorkspaceLeaf } from "obsidian";
 import { NavigationController } from "./navigation.ts";
 import type { Mode, WorkspaceAction } from "./navigation.ts";
-import { normalizeSettings } from "./settings.ts";
+import { DEFAULT_SETTINGS, normalizeSettings } from "./settings.ts";
 import type { VimflowSettings } from "./settings.ts";
 
-const text = (en: string, zh: string): string =>
-  (document.documentElement.lang || navigator.language).startsWith("zh") ? zh : en;
+const text = (en: string, zh: string): string => (getLanguage().startsWith("zh") ? zh : en);
 
 export default class VimflowPlugin extends Plugin {
   settings: VimflowSettings = normalizeSettings(undefined);
   private controllers = new Map<Document, NavigationController>();
   private status?: HTMLElement;
+  private currentMode: Mode = "normal";
+  private disposed = false;
 
   async onload(): Promise<void> {
     this.settings = normalizeSettings(await this.loadData());
@@ -57,7 +59,8 @@ export default class VimflowPlugin extends Plugin {
       }),
     );
     this.app.workspace.onLayoutReady(() => {
-      this.attach(document);
+      if (this.disposed) return;
+      this.attach(this.app.workspace.containerEl.ownerDocument);
       this.app.workspace.iterateAllLeaves((leaf) =>
         this.attach(leaf.view.containerEl.ownerDocument),
       );
@@ -65,6 +68,7 @@ export default class VimflowPlugin extends Plugin {
   }
 
   onunload(): void {
+    this.disposed = true;
     for (const controller of this.controllers.values()) controller.destroy();
     this.controllers.clear();
   }
@@ -81,14 +85,14 @@ export default class VimflowPlugin extends Plugin {
   }
 
   private activeController(): NavigationController | undefined {
-    const doc = this.app.workspace.activeLeaf?.view.containerEl.ownerDocument ?? document;
-    return this.controllers.get(doc);
+    return this.controllers.get(activeDocument);
   }
 
-  updateStatus(mode: Mode = "normal"): void {
+  updateStatus(mode?: Mode): void {
+    if (mode) this.currentMode = mode;
     if (!this.status) return;
     this.status.hidden = !this.settings.showModeIndicator;
-    this.status.setText(`Vimflow · ${mode.toUpperCase()}`);
+    this.status.setText(`Vimflow · ${this.currentMode.toUpperCase()}`);
   }
 
   private runAction(action: WorkspaceAction): void {
@@ -106,7 +110,7 @@ export default class VimflowPlugin extends Plugin {
         this.cycleTab(1);
         break;
       case "closeTab":
-        this.app.workspace.activeLeaf?.detach();
+        this.app.workspace.getMostRecentLeaf()?.detach();
         break;
       case "newTab":
         this.app.workspace.setActiveLeaf(this.app.workspace.getLeaf("tab"), { focus: true });
@@ -153,7 +157,7 @@ export default class VimflowPlugin extends Plugin {
   }
 
   private cycleTab(direction: -1 | 1): void {
-    const active = this.app.workspace.activeLeaf;
+    const active = this.app.workspace.getMostRecentLeaf();
     if (!active) return;
     const leaves: WorkspaceLeaf[] = [];
     this.app.workspace.iterateAllLeaves((leaf) => {
@@ -185,8 +189,8 @@ export default class VimflowPlugin extends Plugin {
         new win.MouseEvent("click", {
           bubbles: true,
           cancelable: true,
-          ctrlKey: !/Mac/.test(navigator.platform),
-          metaKey: /Mac/.test(navigator.platform),
+          ctrlKey: !Platform.isMacOS,
+          metaKey: Platform.isMacOS,
         }),
       );
     } else target.click();
@@ -260,59 +264,69 @@ class VimflowSettingsTab extends PluginSettingTab {
     this.vimflow = plugin;
   }
 
-  display(): void {
-    this.containerEl.empty();
-    const plugin = this.vimflow;
-    new Setting(this.containerEl)
-      .setName(text("Scroll speed", "连续滚动速度"))
-      .setDesc(
-        text("Pixels per second while a navigation key is held.", "按住方向键时每秒移动的像素数。"),
-      )
-      .addSlider((slider) =>
-        slider
-          .setLimits(100, 3000, 50)
-          .setValue(plugin.settings.scrollSpeed)
-          .setDynamicTooltip()
-          .onChange(async (value) => {
-            plugin.settings.scrollSpeed = value;
-            await plugin.saveData(plugin.settings);
-          }),
-      );
-    new Setting(this.containerEl)
-      .setName(text("Tap distance", "短按滚动距离"))
-      .setDesc(
-        text(
+  getSettingDefinitions(): SettingDefinitionItem<keyof VimflowSettings>[] {
+    return [
+      {
+        name: text("Scroll speed", "连续滚动速度"),
+        desc: text(
+          "Pixels per second while a navigation key is held.",
+          "按住方向键时每秒移动的像素数。",
+        ),
+        control: {
+          type: "slider",
+          key: "scrollSpeed",
+          min: 100,
+          max: 3000,
+          step: 50,
+          defaultValue: DEFAULT_SETTINGS.scrollSpeed,
+        },
+      },
+      {
+        name: text("Tap distance", "短按滚动距离"),
+        desc: text(
           "Minimum distance for a quick tap, in pixels.",
           "轻按一次方向键的最小移动距离，单位为像素。",
         ),
-      )
-      .addSlider((slider) =>
-        slider
-          .setLimits(16, 300, 4)
-          .setValue(plugin.settings.tapDistance)
-          .setDynamicTooltip()
-          .onChange(async (value) => {
-            plugin.settings.tapDistance = value;
-            await plugin.saveData(plugin.settings);
-          }),
-      );
-    new Setting(this.containerEl)
-      .setName(text("Hint characters", "定位字符"))
-      .setDesc(text("At least two distinct letters (a–z).", "至少两个不同的英文字母（a–z）。"))
-      .addText((input) =>
-        input.setValue(plugin.settings.hintCharacters).onChange(async (value) => {
-          plugin.settings = normalizeSettings({ ...plugin.settings, hintCharacters: value });
-          await plugin.saveData(plugin.settings);
-        }),
-      );
-    new Setting(this.containerEl)
-      .setName(text("Show mode in status bar", "在状态栏显示模式"))
-      .addToggle((toggle) =>
-        toggle.setValue(plugin.settings.showModeIndicator).onChange(async (value) => {
-          plugin.settings.showModeIndicator = value;
-          plugin.updateStatus();
-          await plugin.saveData(plugin.settings);
-        }),
-      );
+        control: {
+          type: "slider",
+          key: "tapDistance",
+          min: 16,
+          max: 300,
+          step: 4,
+          defaultValue: DEFAULT_SETTINGS.tapDistance,
+        },
+      },
+      {
+        name: text("Hint characters", "定位字符"),
+        desc: text("At least two distinct letters (a–z).", "至少两个不同的英文字母（a–z）。"),
+        control: {
+          type: "text",
+          key: "hintCharacters",
+          defaultValue: DEFAULT_SETTINGS.hintCharacters,
+          validate: (value) => {
+            if (!/^[a-z]+$/i.test(value) || new Set(value.toLowerCase()).size < 2)
+              return text(
+                "Enter at least two distinct letters (a–z).",
+                "请输入至少两个不同的英文字母（a–z）。",
+              );
+          },
+        },
+      },
+      {
+        name: text("Show mode in status bar", "在状态栏显示模式"),
+        control: {
+          type: "toggle",
+          key: "showModeIndicator",
+          defaultValue: DEFAULT_SETTINGS.showModeIndicator,
+        },
+      },
+    ];
+  }
+
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    if (!Object.hasOwn(this.vimflow.settings, key)) return;
+    this.vimflow.settings = normalizeSettings({ ...this.vimflow.settings, [key]: value });
+    this.vimflow.updateStatus();
+    await this.vimflow.saveData(this.vimflow.settings);
   }
 }

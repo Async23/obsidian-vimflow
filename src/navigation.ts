@@ -49,10 +49,14 @@ export class NavigationController {
       request: (callback) => win.requestAnimationFrame(callback),
       cancel: (id) => win.cancelAnimationFrame(id),
     });
-    this.hints = new LinkHints(doc, host.activate, (active) => {
-      if (active) this.setMode("hint");
-      else if (this.mode === "hint") this.setMode("normal");
-    });
+    this.hints = new LinkHints(
+      doc,
+      (target, newTab) => host.activate(target, newTab),
+      (active) => {
+        if (active) this.setMode("hint");
+        else if (this.mode === "hint") this.setMode("normal");
+      },
+    );
     this.listen(doc, "keydown", this.onKeyDown, true);
     this.listen(doc, "keyup", (event) => {
       const keyboard = event as KeyboardEvent;

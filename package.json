@@ -1,6 +1,6 @@
 {
   "name": "obsidian-vimflow",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Vim-style keyboard navigation with frame-driven continuous scrolling for Obsidian.",
   "private": true,
   "type": "module",
@@ -24,7 +24,8 @@
     "build": "tsc --noEmit && node esbuild.config.mjs",
     "test": "node --experimental-strip-types --test src/*.test.ts",
     "test:browser": "playwright test",
-    "check": "pnpm format:check && pnpm test && pnpm build && pnpm test:browser",
+    "check": "pnpm format:check && pnpm run lint && pnpm test && pnpm build && pnpm test:browser",
+    "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -32,8 +33,11 @@
     "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.6",
     "esbuild": "^0.28.2",
+    "eslint": "^9.39.5",
+    "eslint-plugin-obsidianmd": "0.6.0",
     "obsidian": "^1.14.4",
     "prettier": "^3.10.1",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.2"
   }
 }

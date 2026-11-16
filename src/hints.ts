@@ -66,20 +66,15 @@ export class LinkHints {
         isHintVisible(element),
     );
     if (!targets.length) return;
-    const layer = this.doc.createElement("div");
-    layer.className = "vimflow-hints";
+    const layer = this.doc.body.createDiv({ cls: "vimflow-hints" });
     layer.setAttribute("aria-hidden", "true");
-    this.doc.body.append(layer);
     this.layer = layer;
     this.newTab = newTab;
     const labels = makeLabels(targets.length, alphabet);
     const occupied: DOMRect[] = [];
     this.hints = targets.map((target, index) => {
       const label = labels[index]!;
-      const chip = this.doc.createElement("span");
-      chip.className = "vimflow-hint";
-      chip.textContent = label;
-      layer.append(chip);
+      const chip = layer.createSpan({ cls: "vimflow-hint", text: label });
       const targetRect = target.getBoundingClientRect();
       const width = chip.offsetWidth;
       const height = chip.offsetHeight;

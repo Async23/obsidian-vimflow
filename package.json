@@ -1,6 +1,6 @@
 {
   "name": "obsidian-vimflow",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Vim-style keyboard navigation with frame-driven continuous scrolling for Obsidian.",
   "private": true,
   "type": "module",

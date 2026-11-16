@@ -31,6 +31,21 @@ async function setup(page: Page) {
   await page.addStyleTag({ content: styles });
   await page.addScriptTag({ content: script });
   await page.evaluate(() => {
+    // Obsidian installs these DOM helpers in every app window; provide the host API in Chromium.
+    for (const [method, tag] of [
+      ["createDiv", "div"],
+      ["createSpan", "span"],
+    ]) {
+      Object.defineProperty(HTMLElement.prototype, method!, {
+        value(this: HTMLElement, options: { cls?: string; text?: string } = {}) {
+          const child = this.ownerDocument.createElement(tag!);
+          if (options.cls) child.className = options.cls;
+          if (options.text) child.textContent = options.text;
+          this.append(child);
+          return child;
+        },
+      });
+    }
     const env = window as unknown as {
       Vimflow: { NavigationController: new (doc: Document, host: unknown) => unknown };
       controller: unknown;

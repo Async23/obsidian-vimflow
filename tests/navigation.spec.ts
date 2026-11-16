@@ -240,3 +240,19 @@ test("a workspace change discards the old pointer-selected scroll target", async
   await expect.poll(() => position(page)).toBeGreaterThan(50);
   expect(await page.locator(".side").evaluate((el) => el.scrollTop)).toBe(0);
 });
+
+test("i requests editor focus and workspace shortcuts dispatch once", async ({ page }) => {
+  await page.keyboard.press("o");
+  await page.keyboard.press("K");
+  await page.keyboard.press("i");
+  await page.keyboard.type("j");
+  expect(await position(page)).toBe(0);
+  expect(await page.evaluate(() => (window as unknown as { actions: string[] }).actions)).toEqual([
+    "files",
+    "nextTab",
+    "focusEditor",
+  ]);
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("j");
+  await expect.poll(() => position(page)).toBeGreaterThan(50);
+});

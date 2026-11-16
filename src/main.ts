@@ -112,7 +112,10 @@ export default class VimflowPlugin extends Plugin {
         this.app.workspace.setActiveLeaf(this.app.workspace.getLeaf("tab"), { focus: true });
         break;
       case "focusEditor":
-        this.app.workspace.getActiveViewOfType(MarkdownView)?.editor?.focus();
+        void this.focusEditor().catch((error: unknown) => {
+          new Notice(text("Could not focus the editor.", "无法进入编辑视图。"));
+          console.error("Vimflow: failed to focus editor", error);
+        });
         break;
       case "find": {
         const view = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -139,6 +142,14 @@ export default class VimflowPlugin extends Plugin {
         this.showHelp();
         break;
     }
+  }
+
+  private async focusEditor(): Promise<void> {
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (!view) return;
+    if (view.getMode() === "preview")
+      await view.setState({ ...view.getState(), mode: "source" }, { history: false });
+    view.editor.focus();
   }
 
   private cycleTab(direction: -1 | 1): void {

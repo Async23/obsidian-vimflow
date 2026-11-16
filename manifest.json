@@ -1,0 +1,10 @@
+{
+  "id": "vimflow",
+  "name": "Vimflow",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Navigate notes and the workspace with Vim-style keys, continuous scrolling, and link hints.",
+  "author": "Async23",
+  "authorUrl": "https://github.com/Async23",
+  "isDesktopOnly": true
+}

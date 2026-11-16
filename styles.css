@@ -1,0 +1,45 @@
+.vimflow-hints {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+}
+
+.vimflow-hint {
+  position: fixed;
+  display: block;
+  padding: 2px 5px;
+  min-width: 18px;
+  box-sizing: border-box;
+  border: 1px solid var(--text-accent, #7863c5);
+  border-radius: 3px;
+  background: var(--background-primary, #fff);
+  color: var(--text-normal, #222);
+  box-shadow: 0 1px 4px #0004;
+  font-family: var(--font-monospace, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.vimflow-hint[hidden] {
+  display: none;
+}
+.vimflow-status {
+  font-family: var(--font-monospace);
+  font-size: var(--font-smallest);
+}
+.vimflow-help dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 24px;
+}
+.vimflow-help dt,
+.vimflow-help dd {
+  margin: 0;
+}
+.vimflow-help dt {
+  font-family: var(--font-monospace);
+}

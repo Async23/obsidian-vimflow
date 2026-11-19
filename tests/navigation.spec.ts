@@ -142,9 +142,42 @@ test("modal inputs keep their keyboard events and normal mode survives dismissal
   await expect.poll(() => position(page)).toBeGreaterThan(50);
 });
 
-test("gg, G, and half-page keys affect the active scroller", async ({ page }) => {
+test("both half-page keys show intermediate scroll positions before landing", async ({ page }) => {
+  const samples = await page.locator(".markdown-preview-view").evaluateHandle((el) => {
+    const positions: number[] = [];
+    el.addEventListener("scroll", () => positions.push(el.scrollTop));
+    return positions;
+  });
+  for (const [key, destination] of [
+    ["d", 300],
+    ["u", 0],
+  ] as const) {
+    await samples.evaluate((values) => {
+      values.length = 0;
+    });
+    await page.keyboard.press(key);
+    await expect.poll(() => position(page)).toBe(destination);
+    expect((await samples.jsonValue()).some((value) => value > 0 && value < 300)).toBe(true);
+  }
+});
+
+test("system reduced motion pages immediately inside the selected pane", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const side = page.locator(".side");
+  await side.click({ position: { x: 30, y: 30 } });
   await page.keyboard.press("d");
-  expect(await position(page)).toBe(300);
+  expect(await side.evaluate((el) => el.scrollTop)).toBe(150);
+  await page.keyboard.press("u");
+  expect(await side.evaluate((el) => el.scrollTop)).toBe(0);
+  expect(await position(page)).toBe(0);
+});
+
+test("whole-page and document jumps take over from half-page scrolling", async ({ page }) => {
+  await page.keyboard.press("PageDown");
+  expect(await position(page)).toBe(540);
+  await page.keyboard.press("PageUp");
+  expect(await position(page)).toBe(0);
+  await page.keyboard.press("d");
   await page.keyboard.press("g");
   await page.keyboard.press("g");
   expect(await position(page)).toBe(0);

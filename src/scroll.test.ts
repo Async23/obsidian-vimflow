@@ -34,10 +34,15 @@ function fixture(limit = 10000) {
   const surface: ScrollSurface = {
     scrollLeft: 0,
     scrollTop: 0,
+    clientHeight: 600,
+    scrollHeight: limit + 600,
     isConnected: true,
     scrollBy({ left = 0, top = 0 }) {
-      this.scrollLeft = Math.min(limit, Math.max(0, this.scrollLeft + left));
-      this.scrollTop = Math.min(limit, Math.max(0, this.scrollTop + top));
+      this.scrollTo({ left: this.scrollLeft + left, top: this.scrollTop + top });
+    },
+    scrollTo({ left, top }) {
+      this.scrollLeft = Math.min(limit, Math.max(0, left ?? this.scrollLeft));
+      this.scrollTop = Math.min(limit, Math.max(0, top ?? this.scrollTop));
     },
   };
   const scroller = new ContinuousScroller(clock);
@@ -146,4 +151,92 @@ test("detached and boundary surfaces release their animator", () => {
   second.surface.isConnected = false;
   second.clock.advance(20);
   assert.equal(second.clock.callbacks.size, 0);
+});
+
+test("a half page eases in and out and lands at the same place across refresh rates", () => {
+  const intermediate = [5, 10, 20].map((frame) => {
+    const { clock, surface, scroller } = fixture();
+    scroller.halfPage(surface, 1);
+    scroller.release("KeyD");
+    assert.equal(surface.scrollTop, 0);
+    clock.advance(20, frame);
+    const first = surface.scrollTop;
+    clock.advance(20, frame);
+    const second = surface.scrollTop - first;
+    assert.ok(first > 0 && second > first, "the page accelerates from rest");
+    clock.advance(80, frame);
+    const nearEnd = surface.scrollTop;
+    clock.advance(20, frame);
+    assert.ok(surface.scrollTop > nearEnd && surface.scrollTop - nearEnd < second);
+    clock.advance(400, frame);
+    assert.equal(surface.scrollTop, 300);
+    assert.equal(clock.callbacks.size, 0);
+    return nearEnd;
+  });
+  assert.ok(Math.max(...intermediate) - Math.min(...intermediate) < 0.001);
+});
+
+test("same-direction taps extend the destination and carry the current velocity", () => {
+  const { clock, surface, scroller } = fixture();
+  scroller.halfPage(surface, 1);
+  clock.advance(30);
+  const before = surface.scrollTop;
+  clock.advance(10);
+  const atTap = surface.scrollTop;
+  scroller.halfPage(surface, 1);
+  clock.advance(10);
+  assert.ok(surface.scrollTop - atTap >= atTap - before);
+  clock.advance(500);
+  assert.equal(surface.scrollTop, 600);
+  assert.equal(clock.callbacks.size, 0);
+});
+
+test("opposite turns start at the visible position and clamp at either edge", () => {
+  const { clock, surface, scroller } = fixture(800);
+  surface.scrollTop = 500;
+  scroller.halfPage(surface, 1);
+  clock.advance(40);
+  const atTurn = surface.scrollTop;
+  scroller.halfPage(surface, -1);
+  clock.advance(10);
+  assert.ok(surface.scrollTop < atTurn);
+  clock.advance(500);
+  assert.equal(surface.scrollTop, atTurn - 300);
+  for (const direction of [-1, 1] as const) {
+    for (let tap = 0; tap < 4; tap++) scroller.halfPage(surface, direction);
+    clock.advance(500);
+    assert.equal(surface.scrollTop, direction === -1 ? 0 : 800);
+    scroller.halfPage(surface, direction);
+    assert.equal(clock.callbacks.size, 0);
+  }
+});
+
+test("OS repeats can start another half page after landing without building a backlog", () => {
+  const { clock, surface, scroller } = fixture();
+  scroller.halfPage(surface, 1);
+  for (let repeat = 0; repeat < 8; repeat++) {
+    clock.advance(20);
+    scroller.halfPage(surface, 1, { repeat: true });
+  }
+  clock.advance(500);
+  assert.equal(surface.scrollTop, 300);
+  scroller.halfPage(surface, 1, { repeat: true });
+  clock.advance(500);
+  assert.equal(surface.scrollTop, 600);
+});
+
+test("a directional key takes over a half page and stop cancels a pending turn", () => {
+  const { clock, surface, scroller, press } = fixture();
+  scroller.halfPage(surface, 1);
+  clock.advance(50);
+  const origin = surface.scrollTop;
+  press();
+  scroller.release("j");
+  clock.advance(500);
+  assert.equal(surface.scrollTop, origin + 72);
+  scroller.halfPage(surface, -1);
+  scroller.stop();
+  clock.advance(500);
+  assert.equal(surface.scrollTop, origin + 72);
+  assert.equal(clock.callbacks.size, 0);
 });

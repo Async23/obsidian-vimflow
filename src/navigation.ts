@@ -35,6 +35,7 @@ export class NavigationController {
   readonly hints: LinkHints;
   private doc: Document;
   private host: NavigationHost;
+  private reducedMotion: MediaQueryList;
   private mode: Mode = "normal";
   private anchor: Element | null = null;
   private pendingG = 0;
@@ -44,6 +45,7 @@ export class NavigationController {
     this.doc = doc;
     this.host = host;
     const win = doc.defaultView!;
+    this.reducedMotion = win.matchMedia("(prefers-reduced-motion: reduce)");
     this.scroller = new ContinuousScroller({
       now: () => win.performance.now(),
       request: (callback) => win.requestAnimationFrame(callback),
@@ -185,11 +187,23 @@ export class NavigationController {
       return;
     }
 
+    if (event.key === "d" || event.key === "u") {
+      consume();
+      this.pendingG = 0;
+      const direction = event.key === "d" ? 1 : -1;
+      const surface = findScroller(this.doc, this.anchor, 0, direction);
+      if (surface) {
+        this.scroller.halfPage(surface, direction, {
+          repeat: event.repeat,
+          reducedMotion: this.reducedMotion.matches,
+        });
+      } else this.scroller.stop();
+      return;
+    }
+
     const supported = [
       "g",
       "G",
-      "d",
-      "u",
       "f",
       "F",
       "i",
@@ -209,9 +223,9 @@ export class NavigationController {
       return;
     }
     consume();
-    if (event.repeat && !["d", "u", "PageDown", "PageUp"].includes(event.key)) return;
+    if (event.repeat && !["PageDown", "PageUp"].includes(event.key)) return;
     this.scroller.stop();
-    if (["g", "G", "d", "u", "PageDown", "PageUp"].includes(event.key)) {
+    if (["g", "G", "PageDown", "PageUp"].includes(event.key)) {
       const surface = findScroller(this.doc, this.anchor, 0, 1);
       if (!surface) return;
       const now = this.doc.defaultView!.performance.now();
@@ -225,9 +239,8 @@ export class NavigationController {
       this.pendingG = 0;
       if (event.key === "G") surface.scrollTo({ top: surface.scrollHeight, behavior: "instant" });
       else {
-        const sign = ["d", "PageDown"].includes(event.key) ? 1 : -1;
-        const factor = event.key.startsWith("Page") ? 0.9 : 0.5;
-        surface.scrollBy({ top: sign * surface.clientHeight * factor, behavior: "instant" });
+        const sign = event.key === "PageDown" ? 1 : -1;
+        surface.scrollBy({ top: sign * surface.clientHeight * 0.9, behavior: "instant" });
       }
       return;
     }

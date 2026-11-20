@@ -1,6 +1,6 @@
 # Vimflow
 
-Vim-style keyboard navigation for Obsidian, with frame-driven continuous scrolling and letter hints for links and workspace controls.
+Vimium-style keyboard navigation for Obsidian, with frame-driven continuous scrolling and letter hints for links and workspace controls.
 
 Works in reading views, editor views, sidebars, and popout windows. Inputs, menus, and dialogs retain their normal keyboard behavior.
 
